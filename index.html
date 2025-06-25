@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject-wise Mock Tests</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Global Colors (Light Mode Defaults) */
+            --background-color: #eef2f6; /* Lighter, subtle background */
+            --text-color: #2c3e50; /* Darker, professional text */
+            --card-background: #ffffff;
+            --input-background: #fdfdfd; /* Very light input background */
+            --border-color: rgba(0, 0, 0, 0.08);
+            --shadow-color: rgba(0, 0, 0, 0.1); /* Lighter shadow for cards */
+
+            /* Action & State Colors (Light Mode) */
+            --primary-color: #007bff; /* Standard Blue */
+            --primary-color-rgb: 0, 123, 255;
+            --secondary-color: #BADDF8; /* Light Blue for buttons */
+            --secondary-color-rgb: 186, 221, 248;
+            --success-color: #28a745; /* Standard Green */
+            --info-color: #17a2b8; /* Standard Cyan */
+            --warning-color: #ffc107; /* Standard Yellow */
+            --danger-color: #dc3545; /* Standard Red */
+        }
+
+        .dark-mode {
+            /* Global Colors (Dark Mode) */
+            --background-color: #2b3e50; /* Darker background */
+            --text-color: #ecf0f1; /* Light text for contrast */
+            --card-background: #34495e; /* Darker card background */
+            --input-background: #465c71; /* Darker input background */
+            --border-color: rgba(255, 255, 255, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.4); /* More prominent shadow in dark mode */
+
+            /* Action & State Colors (Dark Mode) - Slightly brighter for contrast */
+            --primary-color: #6daffc;
+            --primary-color-rgb: 109, 175, 252;
+            --secondary-color: #4a6278; /* Muted Blue-Gray for buttons */
+            --secondary-color-rgb: 74, 98, 120;
+            --success-color: #2ecc71;
+            --info-color: #3498db;
+            --warning-color: #f1c40f;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 30px 20px;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        .container {
+            max-width: 1200px; /* Wider container for more content */
+            width: 100%;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-color);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--primary-color);
+            margin: 15px auto 0;
+            border-radius: 2px;
+        }
+
+        /* Subject Section Styling */
+        .subject-section {
+            margin-bottom: 4rem;
+        }
+        .subject-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            padding-left: 10px;
+            border-left: 5px solid var(--primary-color);
+            color: var(--text-color); /* Ensure heading color */
+        }
+
+        /* Mock Test Grid (Horizontal Scroll) */
+        .mock-test-grid {
+            display: flex;
+            overflow-x: auto; /* Enable horizontal scrolling */
+            padding-bottom: 20px; /* Space for scrollbar */
+            gap: 25px; /* Space between cards */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            scroll-snap-type: x mandatory; /* Snap to cards */
+        }
+
+        .mock-test-grid::-webkit-scrollbar {
+            height: 12px;
+        }
+        .mock-test-grid::-webkit-scrollbar-track {
+            background: var(--input-background);
+            border-radius: 10px;
+        }
+        .mock-test-grid::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+            border: 3px solid var(--input-background); /* Creates padding effect */
+        }
+        .mock-test-grid::-webkit-scrollbar-thumb:hover {
+            background: color-mix(in srgb, var(--primary-color) 80%, black);
+        }
+        .dark-mode .mock-test-grid::-webkit-scrollbar-thumb {
+            border: 3px solid var(--background-color);
+        }
+
+        /* Mock Test Card */
+        .mock-test-card {
+            flex-shrink: 0; /* Prevent cards from shrinking */
+            width: 320px; /* Fixed width for cards */
+            background: var(--card-background);
+            border-radius: 18px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 40px 0 var(--shadow-color);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            scroll-snap-align: start; /* Align cards to the start when scrolling */
+        }
+
+        .mock-test-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px 0 rgba(var(--primary-color-rgb), 0.25);
+        }
+
+        /* Disabled Card Styling */
+        .mock-test-card.disabled-card {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none; /* Disables click on the card itself */
+            box-shadow: 0 5px 20px 0 var(--shadow-color); /* Less prominent shadow for disabled */
+            transform: none; /* No hover transform */
+        }
+        .mock-test-card.disabled-card:hover {
+            box-shadow: 0 5px 20px 0 var(--shadow-color); /* No hover shadow change */
+        }
+
+        .mock-test-card h3 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .mock-test-card p {
+            font-size: 0.95rem;
+            color: var(--text-color);
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex-grow: 1; /* Allows paragraph to take up available space */
+            min-height: 50px; /* Ensure a consistent height even if empty */
+        }
+
+        .mock-test-card .details {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #6c757d; /* Muted color for details */
+        }
+        .dark-mode .mock-test-card .details {
+            color: #b0c2d7;
+        }
+
+        .mock-test-card .details span {
+            display: flex;
+            align-items: center;
+        }
+        .mock-test-card .details i {
+            margin-right: 8px;
+            color: var(--info-color);
+        }
+
+        .mock-test-card .btn {
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+        }
+        .mock-test-card .btn:hover {
+            background-color: color-mix(in srgb, var(--primary-color) 85%, black);
+            border-color: color-mix(in srgb, var(--primary-color) 85%, black);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(var(--primary-color-rgb), 0.3);
+        }
+        .mock-test-card .btn i {
+            margin-right: 10px;
+        }
+
+        /* Disabled Button Styling */
+        .mock-test-card .disabled-button {
+            background-color: #6c757d; /* Grey background for disabled */
+            border-color: #6c757d;
+            cursor: not-allowed;
+            pointer-events: none; /* Ensure button itself is not clickable */
+            box-shadow: none;
+            transform: none;
+        }
+        .mock-test-card .disabled-button:hover {
+            background-color: #6c757d; /* No hover effect on disabled */
+            border-color: #6c757d;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Mode Toggle Button */
+        .mode-toggle {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: var(--input-background);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 3px 10px var(--shadow-color);
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            z-index: 1000;
+        }
+        .mode-toggle:hover {
+            background: color-mix(in srgb, var(--input-background) 80%, white);
+            box-shadow: 0 5px 15px var(--shadow-color);
+        }
+        .mode-toggle .icon {
+            font-size: 1.8rem;
+            color: var(--text-color);
+            transition: color 0.3s ease;
+        }
+
+        /* Footer */
+        .page-footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        .page-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .page-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+            .section-title {
+                font-size: 1.8rem;
+                margin-bottom: 1.5rem;
+            }
+            .subject-section h2 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            .mock-test-card {
+                width: 280px; /* Slightly smaller cards for mobile */
+                padding: 20px;
+                border-radius: 15px;
+            }
+            .mock-test-card h3 {
+                font-size: 1.3rem;
+            }
+            .mock-test-card .btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            .mock-test-grid {
+                padding-bottom: 15px;
+                gap: 15px;
+            }
+            .mock-test-grid::-webkit-scrollbar {
+                height: 8px;
+            }
+            .mode-toggle {
+                width: 48px;
+                height: 48px;
+                top: 15px;
+                right: 15px;
+            }
+            .mode-toggle .icon {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mode-toggle" id="modeToggle">
+        <span class="icon">☀️</span>
+    </div>
+
+    <div class="container">
+        <h1 class="section-title">Explore Mock Tests by Subject</h1>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-book-open"></i> English Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="english-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-lightbulb"></i> General Science Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="gs-quiz2.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-calculator"></i> Mathematics Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="Mathametics/math-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-language"></i> Sindhi / Urdu Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="su-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-globe-americas"></i> General Knowledge Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="gk-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-mosque"></i> Islamiat / Ethics Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="ist-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-flag"></i> Pakistan Studies Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="ps-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="subject-section">
+            <h2><i class="fas fa-brain"></i> IQ / Analytical Reasoning Mock Tests</h2>
+            <div class="mock-test-grid">
+                <div class="mock-test-card">
+                    <h3>Mock Test 1</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="iq-quiz2.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 2</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 3</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 4</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+                <div class="mock-test-card disabled-card">
+                    <h3>Mock Test 5</h3>
+                    <p></p>
+                    <div class="details">
+                        <span><i class="far fa-question-circle"></i> 50 Q</span>
+                        <span><i class="far fa-clock"></i> 50 Mins</span>
+                    </div>
+                    <a href="#" class="btn btn-primary disabled-button"><i class="fas fa-hourglass-half"></i> Coming Soon</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="page-footer">
+        <p>&copy; 2025 Subject-Wise Mock Test Series. Designed by <a href="https://facebook.com/innoxent.mukesh" target="_blank">Mukesh Kumar</a></p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modeToggle = document.getElementById('modeToggle');
+
+            // Load dark mode preference from local storage
+            function loadDarkModePreference() {
+                const darkMode = localStorage.getItem('darkMode');
+                if (darkMode === 'enabled') {
+                    document.body.classList.add('dark-mode');
+                    modeToggle.querySelector('.icon').textContent = '🌙';
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    modeToggle.querySelector('.icon').textContent = '☀️';
+                }
+            }
+
+            // Toggle Dark/Light Mode
+            function toggleMode() {
+                document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                modeToggle.querySelector('.icon').textContent = isDarkMode ? '🌙' : '☀️';
+                localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+            }
+
+            modeToggle.addEventListener('click', toggleMode);
+
+            // Initial load of dark mode preference
+            loadDarkModePreference();
+        });
+    </script>
+</body>
+</html>
