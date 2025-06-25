@@ -329,6 +329,32 @@
                 font-size: 1.5rem;
             }
         }
+
+  .important-notice {
+            background-color: var(--warning-color);
+            color: var(--text-color); /* Adjust text color for readability */
+            padding: 15px 20px;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid color-mix(in srgb, var(--warning-color) 80%, black);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .important-notice a {
+            color: var(--primary-color); /* Link color within the notice */
+            text-decoration: underline;
+        }
+        .dark-mode .important-notice {
+            color: var(--background-color); /* Light text on dark warning */
+            border-color: color-mix(in srgb, var(--warning-color) 80%, white);
+        }
+        .dark-mode .important-notice a {
+            color: var(--primary-color);
+        }
+
+
     </style>
 </head>
 <body>
@@ -337,6 +363,11 @@
     </div>
 
     <div class="container">
+<div class="important-notice">
+            IMPORTANT NOTICE: All mock tests are password-protected. Contact us on WhatsApp for access: <a href="https://wa.me/+923480358640" target="_blank" rel="noopener noreferrer">+92 348 0358640</a>
+        </div>
+
+
         <h1 class="section-title">Explore Mock Tests by Subject</h1>
 
         <div class="subject-section">
@@ -451,7 +482,7 @@
                         <span><i class="far fa-question-circle"></i> 50 Q</span>
                         <span><i class="far fa-clock"></i> 50 Mins</span>
                     </div>
-                    <a href="Mathametics/math-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
+                    <a href="Mathematics/math-quiz.html" class="btn btn-primary"><i class="fas fa-play"></i> Start Test</a>
                 </div>
                 <div class="mock-test-card disabled-card">
                     <h3>Mock Test 2</h3>
