@@ -312,15 +312,20 @@
             background-color: var(--bg-color);
         }
         .faq-answer {
-            padding: 0 1.25rem; /* No vertical padding when collapsed */
+            /* Ensure no padding when collapsed */
+            padding: 0;
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            opacity: 0; /* Hide content completely */
+            visibility: hidden; /* Prevent interaction when hidden */
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out, opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
             color: var(--text-secondary);
         }
         .faq-item.open .faq-answer {
-            max-height: 200px; /* Adjust as needed */
+            max-height: 1000px; /* Sufficiently large to contain content */
             padding: 1.25rem; /* Apply full padding when open */
+            opacity: 1; /* Show content */
+            visibility: visible; /* Make interactive */
         }
         .faq-item .fas {
             transition: transform 0.3s ease-out;
@@ -410,13 +415,28 @@
             background-color: var(--button-hover-bg);
             color: white;
         }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        /* Make scrollbar visible for horizontal nav */
+        #subject-nav .overflow-x-auto {
+            overflow-x: auto; /* Ensure horizontal scrolling is enabled */
+            -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+            /* Do NOT hide scrollbar here */
         }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        /* Custom scrollbar styles for this div */
+        #subject-nav .overflow-x-auto::-webkit-scrollbar {
+            height: 6px; /* Height of the horizontal scrollbar */
         }
+        #subject-nav .overflow-x-auto::-webkit-scrollbar-track {
+            background: var(--border-color); /* Track color */
+            border-radius: 3px;
+        }
+        #subject-nav .overflow-x-auto::-webkit-scrollbar-thumb {
+            background: var(--accent-light); /* Thumb color */
+            border-radius: 3px;
+        }
+        #subject-nav .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color); /* Thumb hover color */
+        }
+
 
         /* New Desktop Subject Header */
         #desktop-subject-nav {
@@ -435,7 +455,6 @@
             height: 2px;
             bottom: -4px;
         }
-
 
         /* Mobile specific adjustments */
         @media (max-width: 1023px) {
@@ -480,7 +499,7 @@
                 width: 45px;
                 height: 45px;
                 font-size: 1rem;
-                bottom: 20px;
+                bottom: 80px; /* Adjusted position for mobile */
                 right: 20px;
             }
 
@@ -504,6 +523,11 @@
             /* Hide desktop subject nav on mobile */
             #desktop-subject-nav {
                 display: none;
+            }
+
+            /* Hide ::after for mobile menu links */
+            #mobile-menu .nav-link::after {
+                content: none; /* Remove the underline */
             }
         }
         @media (min-width: 1024px) {
@@ -550,19 +574,10 @@
 
         <div id="mobile-menu" class="hidden lg:hidden absolute top-full left-0 w-full header-bg py-4 border-b border-strong z-40">
             <div class="flex flex-col space-y-3 px-6">
-                <!-- Mobile Navigation Links (All links for mobile) -->
+                <!-- Mobile Navigation Links (Only main links for mobile sidebar) -->
                 <a href="#hero" class="nav-link mobile-nav-link text-base py-2">Home</a>
                 <a href="#features" class="nav-link mobile-nav-link text-base py-2">Features</a>
                 <a href="#tests" class="nav-link mobile-nav-link text-base py-2">Tests</a>
-                <a href="#english-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">English</a>
-                <a href="#science-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Science</a>
-                <a href="#math-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Maths</a>
-                <a href="#sindhi-urdu-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Sindhi/Urdu</a>
-                <a href="#gk-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">GK</a>
-                <a href="#islamiat-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Islamiat</a>
-                <a href="#pakistan-studies-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Pakistan Studies</a>
-                <a href="#iq-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">IQ</a>
-                <a href="#computer-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Computer</a>
                 <a href="#testimonials" class="nav-link mobile-nav-link text-base py-2">Testimonials</a>
                 <a href="#faq" class="nav-link mobile-nav-link text-base py-2">FAQ</a>
                 <a href="#contact" class="nav-link mobile-nav-link text-base py-2">Contact</a>
@@ -843,15 +858,15 @@
 
     <!-- New Subject Navigation Bar (Mobile Only) -->
     <nav id="subject-nav" class="fixed bottom-0 left-0 right-0 z-50 py-3 lg:hidden">
-        <div class="container mx-auto px-4 overflow-x-auto whitespace-nowrap scrollbar-hide flex justify-start items-center space-x-3">
-            <a href="#english-tests" class="subject-nav-link">English</a>
-            <a href="#science-tests" class="subject-nav-link">Science</a>
-            <a href="#math-tests" class="subject-nav-link">Maths</a>
-            <a href="#sindhi-urdu-tests" class="subject-nav-link">Sindhi/Urdu</a>
-            <a href="#gk-tests" class="subject-nav-link">GK</a>
-            <a href="#islamiat-tests" class="subject-nav-link">Islamiat</a>
-            <a href="#pakistan-studies-tests" class="subject-nav-link">Pakistan Studies</a>
-            <a href="#iq-tests" class="subject-nav-link">IQ</a>
+        <div class="w-full px-4 overflow-x-auto flex items-center">
+            <a href="#english-tests" class="subject-nav-link mr-3">English</a>
+            <a href="#science-tests" class="subject-nav-link mr-3">Science</a>
+            <a href="#math-tests" class="subject-nav-link mr-3">Maths</a>
+            <a href="#sindhi-urdu-tests" class="subject-nav-link mr-3">Sindhi/Urdu</a>
+            <a href="#gk-tests" class="subject-nav-link mr-3">GK</a>
+            <a href="#islamiat-tests" class="subject-nav-link mr-3">Islamiat</a>
+            <a href="#pakistan-studies-tests" class="subject-nav-link mr-3">Pakistan Studies</a>
+            <a href="#iq-tests" class="subject-nav-link mr-3">IQ</a>
             <a href="#computer-tests" class="subject-nav-link">Computer</a>
         </div>
     </nav>
