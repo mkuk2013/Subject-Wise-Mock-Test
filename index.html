@@ -1,772 +1,486 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mock Tests</title>
+    <title>Subject-Wise Mock Test Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+   <link rel="stylesheet" href="dist/output.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            box-sizing: border-box; /* Ensure consistent padding/margin calculations */
         }
-
-        html, body {
-            height: 100%;
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            color: #1F2937;
-            overflow-y: auto;
-            transition: background 0.3s ease;
+        html {
+            scroll-behavior: smooth; /* Enable smooth scrolling */
         }
-
+        body {
+            font-family: 'Roboto', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
         body.dark-mode {
-            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-            color: #E5E7EB;
+            background-color: #111827; /* Deep slate for dark mode */
+            color: #ffffff; /* White text for all elements */
         }
-
-        .container {
-            width: 80vw;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 32px;
-        }
-
-        /* Important Notice Styles */
-        .important-notice {
-            background-color: #E6F0FA;
-            border: 2px solid #3B82F6;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 16px 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            font-size: 16px;
-            color: #1F2937;
-            text-align: center;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .important-notice strong {
-            font-size: 18px;
-            font-weight: 700;
-            color: #3B82F6;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .important-notice p {
-            margin: 0;
-            line-height: 1.5;
-        }
-        .important-notice a {
-            color: #3B82F6;
-            text-decoration: none;
-        }
-        .important-notice a:hover {
-            text-decoration: underline;
-        }
-        .dark-mode .important-notice {
-            background-color: #1E3A8A;
-            border-color: #60A5FA;
-            color: #E5E7EB;
-        }
-        .dark-mode .important-notice strong,
-        .dark-mode .important-notice a {
-            color: #60A5FA;
-        }
-
-        /* Recently Added Badge Styles */
-        .recently-badge {
-            display: inline-block;
-            background-color: #10B981;
-            color: #FFFFFF;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 12px;
-            margin-left: 8px;
-            vertical-align: middle;
-            line-height: 1;
-        }
-        .dark-mode .recently-badge {
-            background-color: #34D399;
-        }
-
-        /* Subject Icon Styles */
-        .subject-icon {
-            display: inline-block;
-            font-size: 0.9em;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        .dark-mode .subject-icon {
-            filter: brightness(1.2);
-        }
-
-        /* Mode Toggle */
-        #mode-toggle {
+        .sidebar {
             position: fixed;
-            top: 16px;
-            right: 16px;
-            padding: 10px 20px;
-            background: #3B82F6;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.3s ease, transform 0.2s ease;
+            top: 0;
+            left: 0;
+            width: 16rem; /* w-64 = 256px */
+            height: 100vh;
+            overflow-y: auto;
+            background-color: #ffffff; /* White background */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
         }
-        #mode-toggle:hover {
-            background: #2563EB;
+        .dark-mode .sidebar {
+            background-color: #1e293b; /* Dark slate for sidebar in dark mode */
+        }
+        @media (max-width: 640px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+            }
+            .sidebar > div {
+                margin-top: 1.5rem; /* mt-6 = 24px */
+                padding: 1rem; /* p-4 */
+            }
+            .main-content, .hero, .footer, .notice-section {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding-left: 1rem; /* px-4 */
+                padding-right: 1rem; /* px-4 */
+            }
+            .hero h1 {
+                font-size: 1.875rem; /* text-3xl for mobile */
+            }
+            .notice-section > div {
+                max-width: 100%; /* Full-width notice on mobile */
+                width: 100%;
+            }
+            .grid {
+                grid-template-columns: repeat(1, minmax(0, 1fr)); /* Ensure single-column grid */
+            }
+        }
+        .sidebar-item {
+            transition: background-color 0.2s;
+        }
+        .sidebar-item:hover {
+            background-color: #e0e7ff; /* Light indigo hover in light mode */
+        }
+        .dark-mode .sidebar-item:hover {
+            background-color: #4f46e5; /* Indigo hover for dark mode */
+        }
+        .test-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .test-card:hover {
             transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
         }
-        .dark-mode #mode-toggle {
-            background: #60A5FA;
+        .dark-mode .test-card {
+            background-color: #1e3a8a; /* Deep indigo for cards */
+            border-color: #6b7280;
         }
-        .dark-mode #mode-toggle:hover {
-            background: #3B82F6;
+        .dark-mode .test-card:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
         }
-
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            text-align: center;
-            color: #1F2937;
+        .hero {
+            background-color: #4f46e5; /* Solid indigo for hero section */
         }
-        .dark-mode h1 {
-            color: #E5E7EB;
+        .dark-mode .hero {
+            background-color: #1e3a8a; /* Deep indigo for dark mode */
         }
-
-        section {
-            margin-bottom: 32px;
+        .dark-mode .text-indigo-600,
+        .dark-mode .text-indigo-900,
+        .dark-mode .text-amber-500,
+        .dark-mode .text-amber-800,
+        .dark-mode .text-slate-200 {
+            color: #ffffff !important; /* Force white text in dark mode */
         }
-
-        h2 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1F2937;
-            margin-bottom: 16px;
+        .dark-mode .bg-amber-100 {
+            background-color: #1e3a8a !important; /* Match card color in dark mode */
         }
-        .dark-mode h2 {
-            color: #E5E7EB;
+        .dark-mode .bg-slate-400 {
+            background-color: #6b7280 !important; /* Gray for Coming Soon in dark mode */
         }
-
-        .mock-test-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
+        .footer {
+            background: linear-gradient(90deg, #1e293b, #334155); /* Slate gradient */
         }
-
-        .mock-test-card {
-            background: #FFFFFF;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        .dark-mode .footer {
+            background: linear-gradient(90deg, #111827, #1e3a8a); /* Deep slate to indigo */
         }
-        .mock-test-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        /* Social icon hover effects */
+        .social-whatsapp:hover,
+        .social-facebook:hover {
+            filter: brightness(1.2); /* Slightly lighten SVG icons */
         }
-        .dark-mode .mock-test-card {
-            background: #374151;
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
-        }
-        .dark-mode .mock-test-card:hover {
-            box-shadow: 0 6px 16px rgba(255, 255, 255, 0.15);
-        }
-
-        .mock-test-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1F2937;
-        }
-        .dark-mode .mock-test-card h3 {
-            color: #E5E7EB;
-        }
-
-        .mock-test-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            color: #6B7280;
-        }
-        .dark-mode .mock-test-meta {
-            color: #9CA3AF;
-        }
-
-        .mock-test-card button,
-        .mock-test-card .mock-test-button {
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
-            text-decoration: none;
-            text-align: center;
-        }
-        .mock-test-card button:not(:disabled),
-        .mock-test-card .mock-test-button {
-            background: #3B82F6;
-            color: #FFFFFF;
-            display: block;
-        }
-        .mock-test-card button:not(:disabled):hover,
-        .mock-test-card .mock-test-button:hover {
-            background: #2563EB;
-            transform: translateY(-2px);
-        }
-        .mock-test-card button:disabled {
-            background: #D1D5DB;
-            color: #9CA3AF;
-            cursor: not-allowed;
-        }
-        .dark-mode .mock-test-card button:not(:disabled),
-        .dark-mode .mock-test-card .mock-test-button {
-            background: #60A5FA;
-        }
-        .dark-mode .mock-test-card button:not(:disabled):hover,
-        .dark-mode .mock-test-card .mock-test-button:hover {
-            background: #3B82F6;
-        }
-        .dark-mode .mock-test-card button:disabled {
-            background: #4B5563;
-            color: #6B7280;
-        }
-
-        footer {
-            text-align: center;
-            padding: 16px;
-            font-size: 14px;
-            color: #6B7280;
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-top: auto;
-        }
-        .dark-mode footer {
-            color: #9CA3AF;
-            background: rgba(31, 41, 55, 0.95);
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                width: 90vw;
-                padding: 16px;
-            }
-            h1 {
-                font-size: 24px;
-            }
-            h2 {
-                font-size: 20px;
-            }
-            .mock-test-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            }
-            .important-notice {
-                font-size: 14px;
-                padding: 12px;
-            }
-            .important-notice strong {
-                font-size: 16px;
-            }
-            .recently-badge {
-                font-size: 10px;
-                padding: 3px 6px;
-            }
-            .subject-icon {
-                font-size: 0.85em;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                width: 95vw;
-                padding: 12px;
-            }
-            h1 {
-                font-size: 20px;
-            }
-            h2 {
-                font-size: 18px;
-            }
-            .mock-test-grid {
-                grid-template-columns: 1fr;
-            }
-            .mock-test-card {
-                padding: 12px;
-            }
-            .mock-test-card h3 {
-                font-size: 16px;
-            }
-            .mock-test-meta {
-                font-size: 13px;
-            }
-            .mock-test-card button,
-            .mock-test-card .mock-test-button {
-                font-size: 13px;
-                padding: 8px;
-            }
-            .important-notice {
-                font-size: 13px;
-                padding: 10px;
-            }
-            .important-notice strong {
-                font-size: 15px;
-            }
-            .recently-badge {
-                font-size: 9px;
-                padding: 2px 5px;
-            }
-            .subject-icon {
-                font-size: 0.8em;
-            }
-            #mode-toggle {
-                padding: 8px 16px;
-                font-size: 12px;
-            }
+        .social-website:hover {
+            color: #e2e8f0; /* Lighter gray for website icon and text hover */
         }
     </style>
 </head>
-<body>
-    <button id="mode-toggle" aria-label="Toggle Dark Mode">
-        <span class="mode-icon">☀️</span> Light Mode
-    </button>
+<body class="bg-slate-100">
+    <header class="hero py-16 text-white ml-64" style="width: calc(100% - 16rem); box-sizing: border-box;">
+        <div class="pl-6 pr-4">
+            <h1 class="text-4xl sm:text-5xl font-bold text-center">Subject-Wise Mock Test Portal</h1>
+        </div>
+    </header>
 
-    <div class="container">
-        <main>
-            <div class="important-notice">
-                <strong>IMPORTANT NOTICE</strong>
-                <p>All mock tests are password-protected. Contact us on WhatsApp for access: <a href="https://wa.me/+923480358640">+92 348 0358640</a></p>
+    <section class="notice-section py-8 bg-slate-100 dark-mode:bg-[#111827] ml-64" style="width: calc(100% - 16rem); box-sizing: border-box;">
+        <div class="pl-8 pr-4 flex flex-col items-center space-y-6">
+            <div class="bg-amber-100 text-amber-800 p-4 rounded-lg shadow-md w-full text-center">
+                <h2 class="text-lg font-semibold">IMPORTANT NOTICE</h2>
+                <p>All mock tests are password-protected. Contact us on WhatsApp for access: <a href="https://wa.me/923480358640">+92 348 0358640</a></p>
             </div>
+            <button id="toggleButton" class="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors duration-200">☀️ Light Mode</button>
+        </div>
+    </section>
 
-            <h1>Explore Mock Tests by Subject</h1>
+    <aside class="sidebar w-64">
+        <div class="flex flex-col px-4 mt-[10rem]">
+            <h2 class="text-xl font-semibold mb-4 text-indigo-900 dark-mode:text-white">Subjects</h2>
+            <ul class="space-y-2 w-full">
+                <li class="sidebar-item p-2 rounded-md"><a href="#english" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-book mr-2"></i> English</a></li>
+                <li class="sidebar-item p-2 rounded-md"><a href="#science" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-flask mr-2"></i> General Science</a></li>
+                <li class="sidebar-item p-2 rounded-md"><a href="#math" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-calculator mr-2"></i> Mathematics</a></li>
+                <li class="sidebar-item p-2 rounded-md"><a href="#sindhi-urdu" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-language mr-2"></i> Sindhi / Urdu</a></li>
+                <li class="sidebar-item p-2 rounded-md"><a href="#gk" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-globe mr-2"></i> General Knowledge</a></li>
+                <li class="sidebar-item p-2 rounded-md"><a href="#islamiat" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-mosque mr-2"></i> Islamiat / Ethics</a></li>
+                <li class="sidebar-item p-2 rounded-md"><a href="#pakistan-studies" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-flag mr-2"></i> Pakistan Studies</a></li>
+                <li class="sidebar-item p-2 rounded-md"><a href="#iq" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-brain mr-2"></i> IQ / Analytical Reasoning</a></li>
+            </ul>
+        </div>
+    </aside>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">📚</span> English Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button>Start Test</button>
+    <div class="main-content ml-64 px-6 py-8" style="width: calc(100% - 16rem); box-sizing: border-box;">
+        <main class="flex-1">
+            <section id="english" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-book mr-2"></i> English Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">🧪</span> General Science Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button>Start Test</button>
+            <section id="science" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-flask mr-2"></i> General Science Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">🧮</span> Mathematics Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1 <span class="recently-badge" aria-label="Recently Added">Recently Added</span></h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <a href="mathematics/math-quiz.html" class="mock-test-button" role="button" aria-label="Start Mathematics Mock Test 1">Start Test</a>
+            <section id="math" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-calculator mr-2"></i> Mathematics Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1 <span class="text-amber-500 dark-mode:text-white text-sm">Recently Added</span></h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">✍️</span> Sindhi / Urdu Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button>Start Test</button>
+            <section id="sindhi-urdu" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-language mr-2"></i> Sindhi / Urdu Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">🌍</span> General Knowledge Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button>Start Test</button>
+            <section id="gk" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-globe mr-2"></i> General Knowledge Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">🕌</span> Islamiat / Ethics Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button>Start Test</button>
+            <section id="islamiat" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-mosque mr-2"></i> Islamiat / Ethics Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">🇵🇰</span> Pakistan Studies Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button>Start Test</button>
+            <section id="pakistan-studies" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-flag mr-2"></i> Pakistan Studies Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2><span class="subject-icon" aria-hidden="true">🧠</span> IQ / Analytical Reasoning Mock Tests</h2>
-                <div class="mock-test-grid">
-                    <div class="mock-test-card">
-                        <h3>Mock Test 1</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button>Start Test</button>
+            <section id="iq" class="mb-12">
+                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-brain mr-2"></i> IQ / Analytical Reasoning Mock Tests</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 2</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 3</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 4</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
-                    <div class="mock-test-card">
-                        <h3>Mock Test 5</h3>
-                        <div class="mock-test-meta">
-                            <p>50 Q</p>
-                            <p>50 Mins</p>
-                        </div>
-                        <button disabled>Coming Soon</button>
+                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
+                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
+                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
+                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
                     </div>
                 </div>
             </section>
         </main>
-
-        <footer>
-            <p>© 2025 Subject-Wise Mock Test Series. Designed by Mukesh Kumar</p>
-        </footer>
     </div>
 
+    <footer class="footer py-6 text-white ml-64" style="width: calc(100% - 16rem); box-sizing: border-box;">
+        <div class="pl-6 pr-4">
+            <div class="flex flex-col items-center">
+                <div class="flex space-x-6 mb-4">
+                    <a href="https://chat.whatsapp.com/JsizrcizF4KBfprilR3EQP" target="_blank" class="social-whatsapp flex items-center text-white">
+                        <img src="https://cdn.simpleicons.org/whatsapp/25D366" alt="WhatsApp" class="w-6 h-6 mr-2">
+                        <span>WhatsApp Group</span>
+                    </a>
+                    <a href="https://www.facebook.com/MockTestHub" target="_blank" class="social-facebook flex items-center text-white">
+                        <img src="https://cdn.simpleicons.org/facebook/1877F2" alt="Facebook" class="w-6 h-6 mr-2">
+                        <span>Facebook Page</span>
+                    </a>
+                    <a href="https://mock-test-hub.nelify.app" target="_blank" class="social-website flex items-center text-white">
+                        <i class="fas fa-link w-6 h-6 mr-2 text-white"></i>
+                        <span>Official Website</span>
+                    </a>
+                </div>
+                <p>© 2025 Subject-Wise Mock Test Portal. Designed by Mukesh Kumar</p>
+            </div>
+        </div>
+    </footer>
+
     <script>
-        // Mode Toggle Functionality
         function toggleMode() {
-            console.log('Toggling mode');
-            try {
-                const body = document.body;
-                const modeToggle = document.getElementById('mode-toggle');
-                body.classList.toggle('dark-mode');
-                const isDark = body.classList.contains('dark-mode');
-                console.log('Dark mode active:', isDark);
-                modeToggle.innerHTML = isDark 
-                    ? '<span class="mode-icon">🌙</span> Dark Mode'
-                    : '<span class="mode-icon">☀️</span> Light Mode';
-                modeToggle.setAttribute('aria-label', isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode');
-            } catch (error) {
-                console.error('toggleMode error:', error);
-            }
+            document.body.classList.toggle('dark-mode');
+            const button = document.getElementById('toggleButton');
+            button.textContent = document.body.classList.contains('dark-mode') ? '🌙 Dark Mode' : '☀️ Light Mode';
+            button.classList.toggle('bg-indigo-600', !document.body.classList.contains('dark-mode'));
+            button.classList.toggle('bg-indigo-800', document.body.classList.contains('dark-mode'));
+            button.classList.toggle('hover:bg-indigo-700', !document.body.classList.contains('dark-mode'));
+            button.classList.toggle('hover:bg-indigo-900', document.body.classList.contains('dark-mode'));
         }
 
-        // Bind toggleMode to button click
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('Initializing mode toggle');
-            const modeToggle = document.getElementById('mode-toggle');
-            if (modeToggle) {
-                modeToggle.addEventListener('click', toggleMode);
-            } else {
-                console.error('Mode toggle button not found');
-            }
-        });
+        // Add event listener to toggle button
+        document.getElementById('toggleButton').addEventListener('click', toggleMode);
     </script>
 </body>
 </html>
