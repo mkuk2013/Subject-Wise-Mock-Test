@@ -1,486 +1,1055 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subject-Wise Mock Test Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Subject-Wise Mock Test Portal | Your Path to Exam Success</title>
+    <!-- Google Fonts: Poppins (Headings), Inter (Body) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-   <link rel="stylesheet" href="dist/output.css" />
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            box-sizing: border-box; /* Ensure consistent padding/margin calculations */
-        }
-        html {
-            scroll-behavior: smooth; /* Enable smooth scrolling */
-        }
+        /* Base Styles & Global Transitions */
         body {
-            font-family: 'Roboto', sans-serif;
-            transition: background-color 0.3s, color 0.3s;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.4s ease-in-out, color 0.4s ease-in-out;
+            line-height: 1.6;
         }
-        body.dark-mode {
-            background-color: #111827; /* Deep slate for dark mode */
-            color: #ffffff; /* White text for all elements */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
         }
-        .sidebar {
-            position: fixed;
+
+        /* Color Variables - Professional & Modern */
+        /* Light Mode (Default) */
+        :root {
+            --bg-color: #f9fbfd; /* Very light blue-gray */
+            --card-bg: #ffffff;
+            --text-primary: #212529; /* Dark charcoal */
+            --text-secondary: #6c757d; /* Medium gray */
+            --border-color: #e9edf2; /* Subtle light border */
+            --accent-color: #007bff; /* Classic vibrant blue */
+            --accent-light: #4ea8ff; /* Lighter blue */
+            --header-bg: rgba(255, 255, 255, 0.98);
+            --header-border: #dee2e6;
+            --button-hover-bg: #0056b3;
+            --notice-bg: #e0f0ff; /* Lightest blue */
+            --notice-border: #a0d3ff;
+            --notice-text: #004a80;
+            --shadow-light: rgba(0, 0, 0, 0.03);
+            --shadow-medium: rgba(0, 0, 0, 0.06);
+            --shadow-strong: rgba(0, 0, 0, 0.12);
+        }
+
+        /* Dark Mode (Deep, sophisticated tones) */
+        .dark {
+            --bg-color: #171a21; /* Darker slate */
+            --card-bg: #20252e; /* Slightly lighter dark card */
+            --text-primary: #e7eaf0; /* Off-white */
+            --text-secondary: #9ba4b3; /* Muted gray */
+            --border-color: #3a414d; /* Darker border */
+            --accent-color: #66b2ff; /* Vibrant blue */
+            --accent-light: #99ccff; /* Lighter blue */
+            --header-bg: rgba(23, 26, 33, 0.98);
+            --header-border: #3a414d;
+            --button-hover-bg: #4d8ad6;
+            --notice-bg: #2d3b52; /* Darker blue tint */
+            --notice-border: #5b8ecf;
+            --notice-text: #cce0ff;
+            --shadow-light: rgba(0, 0, 0, 0.25);
+            --shadow-medium: rgba(0, 0, 0, 0.4);
+            --shadow-strong: rgba(0, 0, 0, 0.55);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        /* Header Styles */
+        .header-bg {
+            background-color: var(--header-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--header-border);
+            box-shadow: 0 2px 8px var(--shadow-light);
+            transition: padding 0.3s ease-in-out; /* For shrink effect */
+            padding-top: 12px; /* Default padding */
+            padding-bottom: 12px; /* Default padding */
+        }
+        .header-bg.header-scrolled {
+            padding-top: 8px; /* Smaller padding when scrolled */
+            padding-bottom: 8px; /* Smaller padding when scrolled */
+        }
+        .site-title {
+            font-size: 2rem; /* Default font size */
+            transition: font-size 0.3s ease-in-out; /* For shrink effect */
+        }
+        .header-bg.header-scrolled .site-title {
+            font-size: 1.75rem; /* Smaller font size when scrolled */
+        }
+
+        .nav-link {
+            color: var(--text-primary);
+            transition: color 0.3s ease-in-out;
+            padding: 12px 0;
+            position: relative;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            color: var(--accent-color);
+        }
+        .nav-link.active {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0; /* Start from left for slide-in */
+            width: 0%; /* Hidden by default */
+            height: 3px;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease-out; /* Animate width */
+            border-radius: 2px;
+        }
+        .nav-link.active::after,
+        .nav-link:hover::after { /* Also animate on hover */
+            width: 100%; /* Visible when active or hovered */
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-color), var(--card-bg));
+            position: relative;
+            overflow: hidden;
+            padding: 8rem 0;
+        }
+        .hero-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='150' height='150' viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236c757d' fill-opacity='0.03'%3E%3Cpath d='M75 0L0 75L75 150L150 75L75 0ZM75 30L30 75L75 120L120 75L75 30Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-size: 150px 150px;
+            opacity: 0.05;
+            position: absolute;
             top: 0;
             left: 0;
-            width: 16rem; /* w-64 = 256px */
-            height: 100vh;
-            overflow-y: auto;
-            background-color: #ffffff; /* White background */
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            animation: heroPatternPulse 10s infinite alternate ease-in-out; /* Subtle animation */
         }
-        .dark-mode .sidebar {
-            background-color: #1e293b; /* Dark slate for sidebar in dark mode */
+        @keyframes heroPatternPulse {
+            0% { transform: scale(1) translateX(0) translateY(0); opacity: 0.05; }
+            50% { transform: scale(1.03) translateX(5px) translateY(5px); opacity: 0.07; }
+            100% { transform: scale(1) translateX(0) translateY(0); opacity: 0.05; }
         }
-        @media (max-width: 640px) {
-            .sidebar {
-                position: static;
-                width: 100%;
-                height: auto;
+        .gradient-text {
+            background: linear-gradient(90deg, var(--accent-color), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 15px var(--shadow-light);
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out; /* Added border-color transition */
+        }
+        .feature-card:hover {
+            transform: translateY(-10px); /* Stronger lift */
+            box-shadow: 0 15px 40px var(--shadow-medium); /* More pronounced shadow */
+            border-color: var(--accent-color); /* Highlight border on hover */
+        }
+        .feature-card .icon {
+            color: var(--accent-color);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Notice Section */
+        .notice-card {
+            background-color: var(--notice-bg);
+            border: 1px solid var(--notice-border);
+            color: var(--notice-text);
+            box-shadow: 0 4px 15px var(--shadow-medium);
+            padding: 24px;
+            border-radius: 8px;
+        }
+        .notice-card a {
+            color: var(--accent-color);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s ease-in-out;
+        }
+        .notice-card a:hover {
+            color: var(--button-hover-bg);
+            text-decoration: underline;
+        }
+
+        /* Test Cards */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+            box-shadow: 0 6px 20px var(--shadow-medium);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+        .card:hover {
+            transform: translateY(-10px); /* Stronger lift */
+            box-shadow: 0 15px 40px var(--shadow-strong); /* More pronounced shadow */
+            border-color: var(--accent-color); /* Highlight border on hover */
+        }
+        .card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+        .card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: block;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 12px var(--shadow-medium);
+        }
+        .btn-primary:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-4px) scale(1.03); /* More pronounced hover effect */
+            box-shadow: 0 10px 25px var(--shadow-strong);
+        }
+
+        .coming-soon-badge {
+            background-color: var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            display: block;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        .dark .coming-soon-badge {
+            background-color: #4a5568;
+            color: #a0aec0;
+        }
+
+        /* Testimonial Section */
+        .testimonial-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 6px 20px var(--shadow-medium);
+            text-align: center;
+            margin: 0 auto;
+            max-width: 700px;
+        }
+        .testimonial-card p {
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        .testimonial-card .author {
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+        .testimonial-card .rating .fas {
+            color: #ffc107;
+        }
+
+        /* FAQ Section */
+        .faq-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px var(--shadow-light);
+        }
+        .faq-question {
+            padding: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-primary);
+            transition: background-color 0.2s ease-in-out;
+        }
+        .faq-question:hover {
+            background-color: var(--bg-color);
+        }
+        .faq-answer {
+            padding: 0 1.25rem; /* No vertical padding when collapsed */
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            color: var(--text-secondary);
+        }
+        .faq-item.open .faq-answer {
+            max-height: 200px; /* Adjust as needed */
+            padding: 1.25rem; /* Apply full padding when open */
+        }
+        .faq-item .fas {
+            transition: transform 0.3s ease-out;
+        }
+        .faq-item.open .fas {
+            transform: rotate(180deg);
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 10px;}
+        ::-webkit-scrollbar-thumb { background: var(--accent-light); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+        main {
+            box-shadow: 0 0 30px var(--shadow-light); /* Added shadow to main content area */
+            border-radius: 15px; /* Rounded corners for the main content block */
+            overflow: hidden; /* Ensures shadow and border-radius apply correctly */
+        }
+        main::after {
+            content: "";
+            display: block;
+            height: 100px;
+        }
+
+        #back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 5px 15px var(--shadow-strong);
+            opacity: 0; /* Hidden by default */
+            visibility: hidden; /* Ensure it's not clickable when hidden */
+            z-index: 1000;
+            font-weight: bold;
+            font-size: 1.3rem; /* Slightly larger */
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, background-color 0.2s;
+            width: 55px; /* Larger size */
+            height: 55px; /* Larger size */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        #back-to-top:hover {
+            transform: translateY(-5px); /* More pronounced lift */
+            background-color: var(--button-hover-bg);
+            box-shadow: 0 10px 25px var(--shadow-strong);
+        }
+
+        /* Section Icon Colors - consistent with overall accent */
+        .section-icon { color: var(--accent-color); }
+
+        /* Subject Navigation Bar at bottom (Mobile Only) */
+        #subject-nav {
+            background-color: var(--header-bg);
+            border-top: 1px solid var(--header-border);
+            box-shadow: 0 -2px 8px var(--shadow-light);
+            display: none;
+        }
+        #subject-nav .subject-nav-link {
+            color: var(--text-primary);
+            transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+            padding: 8px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            font-weight: 500;
+            text-align: center;
+        }
+        #subject-nav .subject-nav-link.active {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 5px var(--shadow-medium);
+        }
+        #subject-nav .subject-nav-link:hover {
+            background-color: var(--button-hover-bg);
+            color: white;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* New Desktop Subject Header */
+        #desktop-subject-nav {
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--header-border);
+            box-shadow: 0 2px 8px var(--shadow-light);
+            z-index: 40;
+            padding: 0.5rem 0;
+            transition: top 0.3s ease-in-out;
+        }
+        #desktop-subject-nav .nav-link {
+            padding: 8px 0;
+            font-size: 0.95rem;
+        }
+        #desktop-subject-nav .nav-link::after {
+            height: 2px;
+            bottom: -4px;
+        }
+
+
+        /* Mobile specific adjustments */
+        @media (max-width: 1023px) {
+            .hero-section {
+                padding: 6rem 0;
             }
-            .sidebar > div {
-                margin-top: 1.5rem; /* mt-6 = 24px */
-                padding: 1rem; /* p-4 */
+            .hero-section h1 {
+                font-size: 3rem;
             }
-            .main-content, .hero, .footer, .notice-section {
-                margin-left: 0 !important;
-                width: 100% !important;
-                padding-left: 1rem; /* px-4 */
-                padding-right: 1rem; /* px-4 */
+            .hero-section p {
+                font-size: 1rem;
             }
-            .hero h1 {
-                font-size: 1.875rem; /* text-3xl for mobile */
+            .feature-card {
+                padding: 1.5rem;
             }
-            .notice-section > div {
-                max-width: 100%; /* Full-width notice on mobile */
-                width: 100%;
+            .card {
+                padding: 20px;
             }
-            .grid {
-                grid-template-columns: repeat(1, minmax(0, 1fr)); /* Ensure single-column grid */
+            .card h3 {
+                font-size: 1.2rem;
+            }
+            .card p {
+                font-size: 0.9rem;
+            }
+            .btn-primary {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            .testimonial-card {
+                padding: 1.5rem;
+            }
+            .testimonial-card p {
+                font-size: 1rem;
+            }
+            .faq-question {
+                padding: 1rem;
+            }
+            .faq-answer {
+                padding: 0 1rem 1rem;
+            }
+            #back-to-top {
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            /* Show subject nav on mobile */
+            #subject-nav {
+                display: block;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 50;
+                padding: 0.75rem 0;
+            }
+            main {
+                padding-bottom: calc(16px + 0.75rem * 2 + 100px);
+            }
+            footer {
+                margin-bottom: 80px;
+            }
+
+            /* Hide desktop subject nav on mobile */
+            #desktop-subject-nav {
+                display: none;
             }
         }
-        .sidebar-item {
-            transition: background-color 0.2s;
+        @media (min-width: 1024px) {
+            #subject-nav {
+                display: none;
+            }
+            footer {
+                margin-bottom: 0;
+            }
+            #desktop-subject-nav {
+                display: block;
+            }
         }
-        .sidebar-item:hover {
-            background-color: #e0e7ff; /* Light indigo hover in light mode */
-        }
-        .dark-mode .sidebar-item:hover {
-            background-color: #4f46e5; /* Indigo hover for dark mode */
-        }
-        .test-card {
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .test-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-        }
-        .dark-mode .test-card {
-            background-color: #1e3a8a; /* Deep indigo for cards */
-            border-color: #6b7280;
-        }
-        .dark-mode .test-card:hover {
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-        }
-        .hero {
-            background-color: #4f46e5; /* Solid indigo for hero section */
-        }
-        .dark-mode .hero {
-            background-color: #1e3a8a; /* Deep indigo for dark mode */
-        }
-        .dark-mode .text-indigo-600,
-        .dark-mode .text-indigo-900,
-        .dark-mode .text-amber-500,
-        .dark-mode .text-amber-800,
-        .dark-mode .text-slate-200 {
-            color: #ffffff !important; /* Force white text in dark mode */
-        }
-        .dark-mode .bg-amber-100 {
-            background-color: #1e3a8a !important; /* Match card color in dark mode */
-        }
-        .dark-mode .bg-slate-400 {
-            background-color: #6b7280 !important; /* Gray for Coming Soon in dark mode */
-        }
-        .footer {
-            background: linear-gradient(90deg, #1e293b, #334155); /* Slate gradient */
-        }
-        .dark-mode .footer {
-            background: linear-gradient(90deg, #111827, #1e3a8a); /* Deep slate to indigo */
-        }
-        /* Social icon hover effects */
-        .social-whatsapp:hover,
-        .social-facebook:hover {
-            filter: brightness(1.2); /* Slightly lighten SVG icons */
-        }
-        .social-website:hover {
-            color: #e2e8f0; /* Lighter gray for website icon and text hover */
-        }
+
     </style>
 </head>
-<body class="bg-slate-100">
-    <header class="hero py-16 text-white ml-64" style="width: calc(100% - 16rem); box-sizing: border-box;">
-        <div class="pl-6 pr-4">
-            <h1 class="text-4xl sm:text-5xl font-bold text-center">Subject-Wise Mock Test Portal</h1>
+<body class="dark:dark">
+
+    <header id="header" class="header-bg sticky top-0 z-50">
+        <nav class="container mx-auto px-4 lg:px-8 py-3 flex justify-between items-center">
+            <a href="#" class="text-2xl font-extrabold tracking-tight text-text-primary site-title">Subject-Wise Mock Test Portal</a>
+            
+            <div class="hidden lg:flex items-center space-x-6">
+                <!-- Main Navigation Links (Desktop) -->
+                <a href="#hero" class="nav-link header-nav-link text-base">Home</a>
+                <a href="#features" class="nav-link header-nav-link text-base">Features</a>
+                <a href="#tests" class="nav-link header-nav-link text-base">Tests</a> <!-- General link to tests section -->
+                <a href="#testimonials" class="nav-link header-nav-link text-base">Testimonials</a>
+                <a href="#faq" class="nav-link header-nav-link text-base">FAQ</a>
+                <a href="#contact" class="nav-link header-nav-link text-base">Contact</a>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:text-accent-color transition-colors duration-300" aria-label="Toggle Theme">
+                    <i class="fas fa-sun block dark:hidden text-lg"></i>
+                    <i class="fas fa-moon hidden dark:block text-lg"></i>
+                </button>
+                <button id="mobile-menu-btn" class="lg:hidden w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:text-accent-color transition-colors duration-300" aria-label="Toggle Mobile Menu">
+                    <i id="menu-open-icon" class="fas fa-bars text-lg"></i>
+                    <i id="menu-close-icon" class="fas fa-times hidden text-lg"></i>
+                </button>
+            </div>
+        </nav>
+
+        <div id="mobile-menu" class="hidden lg:hidden absolute top-full left-0 w-full header-bg py-4 border-b border-strong z-40">
+            <div class="flex flex-col space-y-3 px-6">
+                <!-- Mobile Navigation Links (All links for mobile) -->
+                <a href="#hero" class="nav-link mobile-nav-link text-base py-2">Home</a>
+                <a href="#features" class="nav-link mobile-nav-link text-base py-2">Features</a>
+                <a href="#tests" class="nav-link mobile-nav-link text-base py-2">Tests</a>
+                <a href="#english-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">English</a>
+                <a href="#science-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Science</a>
+                <a href="#math-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Maths</a>
+                <a href="#sindhi-urdu-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Sindhi/Urdu</a>
+                <a href="#gk-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">GK</a>
+                <a href="#islamiat-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Islamiat</a>
+                <a href="#pakistan-studies-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Pakistan Studies</a>
+                <a href="#iq-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">IQ</a>
+                <a href="#computer-tests" class="nav-link mobile-nav-link text-base py-2 ml-4">Computer</a>
+                <a href="#testimonials" class="nav-link mobile-nav-link text-base py-2">Testimonials</a>
+                <a href="#faq" class="nav-link mobile-nav-link text-base py-2">FAQ</a>
+                <a href="#contact" class="nav-link mobile-nav-link text-base py-2">Contact</a>
+            </div>
         </div>
     </header>
 
-    <section class="notice-section py-8 bg-slate-100 dark-mode:bg-[#111827] ml-64" style="width: calc(100% - 16rem); box-sizing: border-box;">
-        <div class="pl-8 pr-4 flex flex-col items-center space-y-6">
-            <div class="bg-amber-100 text-amber-800 p-4 rounded-lg shadow-md w-full text-center">
-                <h2 class="text-lg font-semibold">IMPORTANT NOTICE</h2>
-                <p>All mock tests are password-protected. Contact us on WhatsApp for access: <a href="https://wa.me/923480358640">+92 348 0358640</a></p>
-            </div>
-            <button id="toggleButton" class="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors duration-200">☀️ Light Mode</button>
+    <!-- New Desktop Subject Navigation Bar -->
+    <nav id="desktop-subject-nav" class="sticky top-0 hidden lg:block header-bg">
+        <div class="container mx-auto px-4 lg:px-8 py-2 flex justify-center items-center space-x-6">
+            <a href="#english-tests" class="nav-link desktop-subject-nav-link">English</a>
+            <a href="#science-tests" class="nav-link desktop-subject-nav-link">Science</a>
+            <a href="#math-tests" class="nav-link desktop-subject-nav-link">Maths</a>
+            <a href="#sindhi-urdu-tests" class="nav-link desktop-subject-nav-link">Sindhi/Urdu</a>
+            <a href="#gk-tests" class="nav-link desktop-subject-nav-link">GK</a>
+            <a href="#islamiat-tests" class="nav-link desktop-subject-nav-link">Islamiat</a>
+            <a href="#pakistan-studies-tests" class="nav-link desktop-subject-nav-link">Pakistan Studies</a>
+            <a href="#iq-tests" class="nav-link desktop-subject-nav-link">IQ</a>
+            <a href="#computer-tests" class="nav-link desktop-subject-nav-link">Computer</a>
         </div>
-    </section>
+    </nav>
 
-    <aside class="sidebar w-64">
-        <div class="flex flex-col px-4 mt-[10rem]">
-            <h2 class="text-xl font-semibold mb-4 text-indigo-900 dark-mode:text-white">Subjects</h2>
-            <ul class="space-y-2 w-full">
-                <li class="sidebar-item p-2 rounded-md"><a href="#english" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-book mr-2"></i> English</a></li>
-                <li class="sidebar-item p-2 rounded-md"><a href="#science" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-flask mr-2"></i> General Science</a></li>
-                <li class="sidebar-item p-2 rounded-md"><a href="#math" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-calculator mr-2"></i> Mathematics</a></li>
-                <li class="sidebar-item p-2 rounded-md"><a href="#sindhi-urdu" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-language mr-2"></i> Sindhi / Urdu</a></li>
-                <li class="sidebar-item p-2 rounded-md"><a href="#gk" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-globe mr-2"></i> General Knowledge</a></li>
-                <li class="sidebar-item p-2 rounded-md"><a href="#islamiat" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-mosque mr-2"></i> Islamiat / Ethics</a></li>
-                <li class="sidebar-item p-2 rounded-md"><a href="#pakistan-studies" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-flag mr-2"></i> Pakistan Studies</a></li>
-                <li class="sidebar-item p-2 rounded-md"><a href="#iq" class="text-indigo-600 dark-mode:text-white hover:underline"><i class="fas fa-brain mr-2"></i> IQ / Analytical Reasoning</a></li>
-            </ul>
-        </div>
-    </aside>
+    <main class="container mx-auto px-4 lg:px-8 relative overflow-hidden">
+        <!-- Hero Section: Emphasizes the core value proposition -->
+        <section id="hero" class="hero-section text-center relative z-10">
+            <div class="hero-pattern"></div>
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 leading-tight">
+                Your <span class="gradient-text">Ultimate Edge</span> for Exam Success.
+            </h1>
+            <p class="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-8">
+                Master any subject with our comprehensive mock tests, detailed analytics, and personalized learning paths.
+            </p>
+            <a href="#english-tests" class="btn-primary inline-block text-lg md:text-xl !py-3 !px-8">Explore Mock Tests</a>
+            
+            <div class="max-w-xl mx-auto notice-card rounded-lg text-center mt-12">
+                <h2 class="font-semibold text-xl mb-3">Important Notice</h2>
+                <p class="text-base">All tests are password-protected. For access, contact us on WhatsApp: <a href="https://wa.me/923480358640" target="_blank" class="hover:underline">+923480358640</a>.</p>
+            </div> 
+        </section>
 
-    <div class="main-content ml-64 px-6 py-8" style="width: calc(100% - 16rem); box-sizing: border-box;">
-        <main class="flex-1">
-            <section id="english" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-book mr-2"></i> English Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
+        <!-- Features Section: Highlights key benefits of the platform -->
+        <section id="features" class="py-16 lg:py-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Why Choose Subject-Wise Mock Test Portal?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="feature-card">
+                    <i class="fas fa-chart-line icon"></i>
+                    <h3>Detailed Performance Analytics</h3>
+                    <p>Track your progress, identify strengths and weaknesses with in-depth reports.</p>
                 </div>
-            </section>
-
-            <section id="science" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-flask mr-2"></i> General Science Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
+                <div class="feature-card">
+                    <i class="fas fa-cogs icon"></i>
+                    <h3>Customizable Test Modules</h3>
+                    <p>Tailor tests to your specific needs, focusing on subjects or topics that matter most.</p>
                 </div>
-            </section>
-
-            <section id="math" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-calculator mr-2"></i> Mathematics Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1 <span class="text-amber-500 dark-mode:text-white text-sm">Recently Added</span></h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="Mathematics/math-quiz.html" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
+                <div class="feature-card">
+                    <i class="fas fa-book-open icon"></i>
+                    <h3>Extensive Question Bank</h3>
+                    <p>Access thousands of high-quality questions covering a wide range of subjects.</p>
                 </div>
-            </section>
-
-            <section id="sindhi-urdu" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-language mr-2"></i> Sindhi / Urdu Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                </div>
-            </section>
-
-            <section id="gk" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-globe mr-2"></i> General Knowledge Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                </div>
-            </section>
-
-            <section id="islamiat" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-mosque mr-2"></i> Islamiat / Ethics Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                </div>
-            </section>
-
-            <section id="pakistan-studies" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-flag mr-2"></i> Pakistan Studies Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                </div>
-            </section>
-
-            <section id="iq" class="mb-12">
-                <h2 class="text-2xl font-semibold mb-6 text-indigo-900 dark-mode:text-white"><i class="fas fa-brain mr-2"></i> IQ / Analytical Reasoning Mock Tests</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 1</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <a href="#" class="bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition-colors">Start Test</a>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 2</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 3</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 4</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                    <div class="test-card bg-white p-6 rounded-lg shadow-md border border-indigo-200">
-                        <h3 class="text-lg font-semibold mb-2 text-indigo-900 dark-mode:text-white">Mock Test 5</h3>
-                        <p class="text-indigo-600 dark-mode:text-white mb-4">50 Questions • 50 Minutes</p>
-                        <span class="bg-slate-400 text-white px-4 py-2 rounded-full cursor-not-allowed">Coming Soon</span>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <footer class="footer py-6 text-white ml-64" style="width: calc(100% - 16rem); box-sizing: border-box;">
-        <div class="pl-6 pr-4">
-            <div class="flex flex-col items-center">
-                <div class="flex space-x-6 mb-4">
-                    <a href="https://chat.whatsapp.com/JsizrcizF4KBfprilR3EQP" target="_blank" class="social-whatsapp flex items-center text-white">
-                        <img src="https://cdn.simpleicons.org/whatsapp/25D366" alt="WhatsApp" class="w-6 h-6 mr-2">
-                        <span>WhatsApp Group</span>
-                    </a>
-                    <a href="https://www.facebook.com/MockTestHub" target="_blank" class="social-facebook flex items-center text-white">
-                        <img src="https://cdn.simpleicons.org/facebook/1877F2" alt="Facebook" class="w-6 h-6 mr-2">
-                        <span>Facebook Page</span>
-                    </a>
-                    <a href="https://mock-test-hub.nelify.app" target="_blank" class="social-website flex items-center text-white">
-                        <i class="fas fa-link w-6 h-6 mr-2 text-white"></i>
-                        <span>Official Website</span>
-                    </a>
-                </div>
-                <p>© 2025 Subject-Wise Mock Test Portal. Designed by Mukesh Kumar</p>
             </div>
+        </section>
+
+        <!-- Mock Tests Section: Main content area for test categories -->
+        <section id="tests" class="py-16 lg:py-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Our Mock Tests by Subject</h2>
+            
+            <div class="space-y-16">
+                <section id="english-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-book section-icon text-2xl md:text-3xl mr-3"></i>English Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">English Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">English Mock Test 2</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <span class="coming-soon-badge">Coming Soon</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="science-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-flask section-icon text-2xl md:text-3xl mr-3"></i>General Science Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">Science Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="math-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-calculator section-icon text-2xl md:text-3xl mr-3"></i>Mathematics Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">Math Mock Test 1 <span class="text-accent-color text-sm ml-2 font-normal">New!</span></h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="Mathematics/math-quiz.html" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="sindhi-urdu-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-language section-icon text-2xl md:text-3xl mr-3"></i>Sindhi / Urdu Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">Sindhi/Urdu Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="gk-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-globe section-icon text-2xl md:text-3xl mr-3"></i>General Knowledge Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">GK Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="islamiat-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-mosque section-icon text-2xl md:text-3xl mr-3"></i>Islamiat / Ethics Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">Islamiat Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="pakistan-studies-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-flag section-icon text-2xl md:text-3xl mr-3"></i>Pakistan Studies Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">Pakistan Studies Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="iq-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-brain section-icon text-2xl md:text-3xl mr-3"></i>IQ / Analytical Reasoning Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">IQ Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="computer-tests">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-8 flex items-center justify-center lg:justify-start">
+                        <i class="fas fa-desktop section-icon text-2xl md:text-3xl mr-3"></i>Computer Tests
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="card">
+                            <div>
+                                <h4 class="text-xl">Computer Mock Test 1</h4>
+                                <p>50 Questions • 50 Minutes</p>
+                            </div>
+                            <a href="#" class="btn-primary">Start Test</a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section id="testimonials" class="py-16 lg:py-24 bg-gradient-to-br from-bg-color to-card-bg">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">What Our Users Say</h2>
+            <div class="testimonial-card">
+                <div class="rating mb-4">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                </div>
+                <p>"Subject-Wise Mock Test Portal has transformed my exam preparation! The detailed analytics helped me focus on my weak areas, and the mock tests are incredibly realistic. Highly recommended!"</p>
+                <div class="author">- Aisha Khan, University Student</div>
+            </div>
+            <!-- Could add more testimonials here or a carousel functionality with JS -->
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="py-16 lg:py-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <div class="max-w-3xl mx-auto">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How do I access the mock tests?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>All mock tests on Subject-Wise Mock Test Portal are currently password-protected. Please contact us on WhatsApp at <a href="https://wa.me/923480358640" class="text-accent-color hover:underline">+923480358640</a> to get the access password.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Are the tests mobile-friendly?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, Subject-Wise Mock Test Portal is designed to be fully responsive and user-friendly on all devices, including desktops, tablets, and smartphones.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Can I track my performance over time?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Currently, performance tracking features are under development. We aim to provide detailed analytics and progress reports in future updates.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How often are new tests added?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We regularly update our test bank with new content across various subjects to ensure you always have fresh material for practice.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section (Simple Call to Action) -->
+        <section id="contact" class="py-16 lg:py-24 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-8">Ready to Ace Your Exams?</h2>
+            <p class="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10">
+                Join Subject-Wise Mock Test Portal today and take the first step towards achieving your academic goals.
+            </p>
+            <a href="https://wa.me/923480358640" target="_blank" class="btn-primary inline-block !py-3 !px-8 text-lg">Contact Us on WhatsApp <i class="fab fa-whatsapp ml-2"></i></a>
+        </section>
+
+    </main>
+
+    <!-- New Subject Navigation Bar (Mobile Only) -->
+    <nav id="subject-nav" class="fixed bottom-0 left-0 right-0 z-50 py-3 lg:hidden">
+        <div class="container mx-auto px-4 overflow-x-auto whitespace-nowrap scrollbar-hide flex justify-start items-center space-x-3">
+            <a href="#english-tests" class="subject-nav-link">English</a>
+            <a href="#science-tests" class="subject-nav-link">Science</a>
+            <a href="#math-tests" class="subject-nav-link">Maths</a>
+            <a href="#sindhi-urdu-tests" class="subject-nav-link">Sindhi/Urdu</a>
+            <a href="#gk-tests" class="subject-nav-link">GK</a>
+            <a href="#islamiat-tests" class="subject-nav-link">Islamiat</a>
+            <a href="#pakistan-studies-tests" class="subject-nav-link">Pakistan Studies</a>
+            <a href="#iq-tests" class="subject-nav-link">IQ</a>
+            <a href="#computer-tests" class="subject-nav-link">Computer</a>
+        </div>
+    </nav>
+
+    <footer class="border-t border-solid border-border-color py-10">
+        <div class="container mx-auto px-4 lg:px-8 text-center text-text-secondary">
+            <div class="flex justify-center space-x-6 mb-6">
+                <a href="https://chat.whatsapp.com/JsizrcizF4KBfprilR3EQP" target="_blank" class="text-text-secondary hover:text-accent-color transition-colors duration-300" aria-label="Join our WhatsApp Group"><i class="fab fa-whatsapp text-3xl"></i></a>
+                <a href="https://www.facebook.com/MockTestHub" target="_blank" class="text-text-secondary hover:text-accent-color transition-colors duration-300" aria-label="Visit our Facebook Page"><i class="fab fa-facebook-f text-3xl"></i></a>
+                <a href="https://mock-test-hub.nelify.app" target="_blank" class="text-text-secondary hover:text-accent-color transition-colors duration-300" aria-label="Visit our Website"><i class="fas fa-globe text-3xl"></i></a>
+            </div>
+            <p class="text-sm">&copy; 2025 Subject-Wise Mock Test Portal. All Rights Reserved.</p>
         </div>
     </footer>
 
-    <script>
-        function toggleMode() {
-            document.body.classList.toggle('dark-mode');
-            const button = document.getElementById('toggleButton');
-            button.textContent = document.body.classList.contains('dark-mode') ? '🌙 Dark Mode' : '☀️ Light Mode';
-            button.classList.toggle('bg-indigo-600', !document.body.classList.contains('dark-mode'));
-            button.classList.toggle('bg-indigo-800', document.body.classList.contains('dark-mode'));
-            button.classList.toggle('hover:bg-indigo-700', !document.body.classList.contains('dark-mode'));
-            button.classList.toggle('hover:bg-indigo-900', document.body.classList.contains('dark-mode'));
-        }
+    <button id="back-to-top" title="Back to top">↑</button>
 
-        // Add event listener to toggle button
-        document.getElementById('toggleButton').addEventListener('click', toggleMode);
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuOpenIcon = document.getElementById('menu-open-icon');
+            const menuCloseIcon = document.getElementById('menu-close-icon');
+            const backToTopBtn = document.getElementById('back-to-top');
+            const sections = document.querySelectorAll('section[id]');
+            const headerNavLinks = document.querySelectorAll('.header-nav-link'); // Specific to main header
+            const desktopSubjectNavLinks = document.querySelectorAll('.desktop-subject-nav-link'); // Specific to new desktop subject nav
+            const subjectNavLinks = document.querySelectorAll('.subject-nav-link'); // Specific to mobile bottom subject nav
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link'); // Specific to mobile menu
+            const header = document.getElementById('header');
+            const desktopSubjectNav = document.getElementById('desktop-subject-nav');
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            const siteTitle = document.querySelector('.site-title');
+
+            // Theme Toggler
+            themeToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('dark');
+                if (document.body.classList.contains('dark')) {
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+
+            // Apply saved theme on load
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark');
+            }
+
+            // Mobile Menu Toggle
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                menuOpenIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('hidden');
+            });
+            
+            // Close mobile menu when a link is clicked
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    menuOpenIcon.classList.remove('hidden');
+                    menuCloseIcon.classList.add('hidden');
+                });
+            });
+
+            // Update desktop subject nav position dynamically and header shrink
+            const updateHeaderAndNavPositions = () => {
+                const scrollY = window.pageYOffset;
+                const headerHeight = header.offsetHeight; // Get current header height
+
+                // Header shrink effect
+                if (scrollY > 50) { // Adjust scroll threshold as needed
+                    header.classList.add('header-scrolled');
+                } else {
+                    header.classList.remove('header-scrolled');
+                }
+
+                // Update desktop subject nav position
+                if (window.innerWidth >= 1024) {
+                    // Recalculate headerHeight after potential shrink
+                    const currentHeaderHeight = header.offsetHeight;
+                    desktopSubjectNav.style.top = `${currentHeaderHeight}px`;
+                }
+            };
+            // Call on load and scroll
+            updateHeaderAndNavPositions();
+            window.addEventListener('scroll', updateHeaderAndNavPositions);
+            window.addEventListener('resize', updateHeaderAndNavPositions); // Also on resize for responsiveness
+
+
+            // Active Nav Link on Scroll with Debouncing
+            let activeNavLinkTimeout;
+            const activateNavLink = () => {
+                if (activeNavLinkTimeout) {
+                    clearTimeout(activeNavLinkTimeout);
+                }
+                activeNavLinkTimeout = setTimeout(() => {
+                    let scrollY = window.pageYOffset;
+                    const headerHeight = header.offsetHeight; 
+                    const desktopSubjectNavHeight = desktopSubjectNav.offsetHeight; 
+
+                    // Clear active classes from all nav links
+                    headerNavLinks.forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    desktopSubjectNavLinks.forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    subjectNavLinks.forEach(link => { 
+                        link.classList.remove('active');
+                    });
+
+                    let foundActive = false;
+                    for (let i = sections.length - 1; i >= 0; i--) {
+                        const section = sections[i];
+                        const sectionRect = section.getBoundingClientRect();
+                        
+                        let totalStickyHeight = headerHeight;
+                        if (window.innerWidth >= 1024) {
+                            totalStickyHeight += desktopSubjectNavHeight;
+                        }
+
+                        const sectionTop = sectionRect.top + window.pageYOffset - totalStickyHeight - 50; 
+                        
+                        if (scrollY >= sectionTop) {
+                            // Activate link in main header nav
+                            headerNavLinks.forEach(link => {
+                                if (link.getAttribute('href') === `#${section.id}` || 
+                                    (section.id.endsWith('-tests') && link.getAttribute('href') === `#tests`) ||
+                                    (section.id === 'hero' && link.getAttribute('href') === '#hero') ||
+                                    (section.id === 'features' && link.getAttribute('href') === '#features') ||
+                                    (section.id === 'testimonials' && link.getAttribute('href') === '#testimonials') ||
+                                    (section.id === 'faq' && link.getAttribute('href') === '#faq') ||
+                                    (section.id === 'contact' && link.getAttribute('href') === '#contact')
+                                ) {
+                                    link.classList.add('active');
+                                }
+                            });
+
+                            // Activate link in desktop subject nav (if visible)
+                            if (window.innerWidth >= 1024) {
+                                desktopSubjectNavLinks.forEach(link => {
+                                    if (link.getAttribute('href') === `#${section.id}`) {
+                                        link.classList.add('active');
+                                    }
+                                });
+                            }
+                            
+                            // Activate link in mobile bottom subject nav (if visible)
+                            if (window.innerWidth < 1024) {
+                                subjectNavLinks.forEach(link => {
+                                    if (link.getAttribute('href') === `#${section.id}`) {
+                                        link.classList.add('active');
+                                    }
+                                });
+                            }
+
+                            foundActive = true;
+                            break;
+                        }
+                    }
+
+                    // Special case for when at the very top of the page, ensure Home is active
+                    if (!foundActive && scrollY === 0) {
+                        const homeNavLink = document.querySelector('.header-nav-link[href="#hero"]');
+                        if (homeNavLink) {
+                            homeNavLink.classList.add('active');
+                        }
+                    }
+
+                }, 50);
+            };
+            
+            window.addEventListener('scroll', activateNavLink, { passive: true });
+            activateNavLink();
+
+            // Back to Top Button visibility and animation
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTopBtn.classList.add('show');
+                } else {
+                    backToTopBtn.classList.remove('show');
+                }
+            });
+
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // FAQ Accordion Functionality
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', () => {
+                    const parentItem = question.closest('.faq-item');
+                    parentItem.classList.toggle('open');
+                });
+            });
+        });
     </script>
 </body>
 </html>
