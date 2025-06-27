@@ -1055,7 +1055,7 @@ const quizData = [
       answerReviewContainer.innerHTML = '';
       quizData.forEach((question, index) => {
         const userAnswer = answers[index];
-        const isCorrect = userAnswer === question.correct;
+        const isCorrectlyAnswered = userAnswer === question.correct;
 
         const reviewItem = document.createElement('div');
         reviewItem.className = 'review-item';
@@ -1071,26 +1071,39 @@ const quizData = [
 
           let iconClass = 'fa-circle'; // Default for unselected
           let iconColor = 'text-secondary'; // Default color
+          let textSuffix = ''; // Text to add next to the option
 
           if (option === question.correct) {
+            // This is the correct answer
             iconClass = 'fa-check-circle';
             iconColor = 'text-success';
             optionElement.classList.add('correct-answer');
+            textSuffix = ' (Correct Answer)'; // Add "(Correct)"
           }
 
-          if (option === userAnswer && option !== question.correct) {
-            iconClass = 'fa-times-circle';
-            iconColor = 'text-danger';
-            optionElement.classList.add('user-answer', 'wrong');
-          } else if (option === userAnswer && option === question.correct) {
-            iconClass = 'fa-check-circle'; // User picked correct answer
-            iconColor = 'text-success';
-            optionElement.classList.add('user-answer', 'correct-answer');
+          if (option === userAnswer) {
+            // This option was selected by the user
+            if (isCorrectlyAnswered) {
+              // User's answer is correct
+              iconClass = 'fa-check-circle';
+              iconColor = 'text-success';
+              optionElement.classList.add('user-answer', 'correct-answer');
+              // textSuffix is already "(Correct)" from the previous block
+            } else {
+              // User's answer is incorrect
+              iconClass = 'fa-times-circle';
+              iconColor = 'text-danger';
+              optionElement.classList.add('user-answer', 'wrong');
+              textSuffix = ' (Your answer is incorrect)'; // Add "(Your answer is incorrect)"
+            }
           }
+          // If an option is correct but not selected by the user, it will just show the green tick and "(Correct)"
+          // If an option is not correct and not selected by the user, it will remain default (grey circle)
+
 
           optionElement.innerHTML = `
             <span class="option-icon ${iconColor}"><i class="far ${iconClass}"></i></span>
-            <span>${option}</span>
+            <span>${option}${textSuffix}</span>
           `;
           optionsReviewDiv.appendChild(optionElement);
         });
@@ -1226,7 +1239,11 @@ const quizData = [
 
       prevBtn.addEventListener('click', showPreviousQuestion);
       nextBtn.addEventListener('click', showNextQuestion);
-      submitQuizFinalBtn.addEventListener('click', submitQuiz);
+      submitQuizFinalBtn.addEventListener('click', () => {
+        const myModal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+        myModal.hide(); // Hide the modal after confirming
+        submitQuiz();
+      });
       restartQuizBtn.addEventListener('click', restartQuiz);
 
       markForReviewCheckbox.addEventListener('change', () => {
@@ -1237,7 +1254,7 @@ const quizData = [
       modeToggleBtn.addEventListener('click', toggleMode);
 
       printSaveBtn.addEventListener('click', () => {
-        const element = document.getElementById('resultsSection'); // Target the results section
+        const element = document.getElementById('resultsSection'); // Target the results section for PDF
         html2pdf().from(element).set({
           margin: 10,
           filename: 'Science_Quiz_Results.pdf',

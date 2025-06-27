@@ -863,8 +863,8 @@ const quizData = [
     let quizSubmitted = false;
 
     // DOM Elements
-    const mainQuizTitle = document.getElementById('mainQuizTitle'); // New element for main title
-    const modeToggleContainer = document.getElementById('modeToggleContainer'); // New container for toggle button
+    const mainQuizTitle = document.getElementById('mainQuizTitle');
+    const modeToggleContainer = document.getElementById('modeToggleContainer');
     const questionTextElement = document.getElementById('questionText');
     const optionsContainer = document.getElementById('optionsContainer');
     const questionCounter = document.getElementById('questionCounter');
@@ -890,13 +890,13 @@ const quizData = [
     const modeToggleBtn = document.getElementById('modeToggle');
 
 
-    // Password Obfuscation (from jst-quiz1.html)
+    // Password Obfuscation
     function obfuscate(str) {
         return btoa(str.split('').reverse().join(''));
     }
 
     // Encrypted Password
-    const actualEncryptedPassword = obfuscate("englishtest2025"); // "englishtest2025" reversed and then base64 encoded
+    const actualEncryptedPassword = obfuscate("englishtest2025");
 
     // Function to load a question
     function loadQuestion() {
@@ -905,7 +905,7 @@ const quizData = [
 
       const question = quizData[currentQuestionIndex];
       questionTextElement.innerHTML = `Q${currentQuestionIndex + 1}: ${question.question.replace(/\n/g, '<br>')}`;
-      optionsContainer.innerHTML = ''; // Clear previous options
+      optionsContainer.innerHTML = '';
 
       question.option.forEach((option, index) => {
         const optionId = `q${currentQuestionIndex}-option${index}`;
@@ -921,58 +921,46 @@ const quizData = [
         `;
         optionsContainer.appendChild(optionDiv);
 
-        // Add event listener to save answer on selection
         optionDiv.querySelector('input').addEventListener('change', (event) => {
           answers[currentQuestionIndex] = event.target.value;
           updateQuestionPaletteStatus(currentQuestionIndex);
         });
       });
 
-      // Update mark for review checkbox
       markForReviewCheckbox.checked = markedForReview[currentQuestionIndex];
-
       updateQuestionCounter();
-      updateQuestionPaletteStatus(currentQuestionIndex); // Update current question highlighting
-      updateNavigationButtons(); // Update navigation button visibility
+      updateQuestionPaletteStatus(currentQuestionIndex);
+      updateNavigationButtons();
     }
 
-    // Update question counter
     function updateQuestionCounter() {
       questionCounter.textContent = `Question ${currentQuestionIndex + 1} / ${quizData.length}`;
     }
 
-    // Update navigation buttons visibility
     function updateNavigationButtons() {
-        // Hide all buttons initially then show relevant ones
         prevBtn.classList.add('d-none');
         nextBtn.classList.add('d-none');
         submitQuizBtn.classList.add('d-none');
 
         if (currentQuestionIndex === 0) {
-            // First question
-            if (quizData.length > 1) { // Only show 'Next' if there's more than one question
+            if (quizData.length > 1) {
                 nextBtn.classList.remove('d-none');
-            } else { // If it's a single question quiz
+            } else {
                 submitQuizBtn.classList.remove('d-none');
             }
         } else if (currentQuestionIndex === quizData.length - 1) {
-            // Last question
             prevBtn.classList.remove('d-none');
             submitQuizBtn.classList.remove('d-none');
         } else {
-            // Middle questions (1 to 49 for a 50-question quiz)
             prevBtn.classList.remove('d-none');
             nextBtn.classList.remove('d-none');
         }
-        // All buttons are centered by default CSS for .quiz-navigation
     }
 
-
-    // Timer functions
     function updateTimer() {
       if (timeRemaining <= 0) {
         clearInterval(timerInterval);
-        submitQuiz(); // Auto-submit when time runs out
+        submitQuiz();
         return;
       }
       timeRemaining--;
@@ -981,7 +969,6 @@ const quizData = [
       timerDisplay.innerHTML = `<i class="fas fa-clock"></i> ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
 
-    // Navigation functions
     function showNextQuestion() {
       if (currentQuestionIndex < quizData.length - 1) {
         currentQuestionIndex++;
@@ -996,7 +983,6 @@ const quizData = [
       }
     }
 
-    // Generate Question Palette
     function generateQuestionPalette() {
       questionPalette.innerHTML = '';
       for (let i = 0; i < quizData.length; i++) {
@@ -1009,17 +995,15 @@ const quizData = [
           loadQuestion();
         });
         questionPalette.appendChild(button);
-        updateQuestionPaletteStatus(i); // Initial status update for all
+        updateQuestionPaletteStatus(i);
       }
     }
 
-    // Update Question Palette button status (color)
     function updateQuestionPaletteStatus(index) {
       const paletteButton = questionPalette.querySelector(`button[data-index="${index}"]`);
       if (!paletteButton) return;
 
       paletteButton.classList.remove('current', 'answered', 'marked', 'answered-marked', 'unattempted');
-
       const isAnswered = answers[index] !== null;
       const isMarked = markedForReview[index];
 
@@ -1036,21 +1020,20 @@ const quizData = [
       }
     }
 
-    // Submit Quiz
     function submitQuiz() {
-      clearInterval(timerInterval); // Stop the timer
+      clearInterval(timerInterval);
       quizSubmitted = true;
       let score = 0;
+      
       quizData.forEach((question, index) => {
-        if (answers[index] === question.correct) {
+        if (answers[index] && answers[index].trim() === question.correct) {
           score++;
         }
       });
 
-      // Hide quiz section, show result section
       quizSection.classList.add('d-none');
-      mainQuizTitle.classList.add('d-none'); // Hide main title
-      modeToggleContainer.classList.add('d-none'); // Hide mode toggle
+      mainQuizTitle.classList.add('d-none');
+      modeToggleContainer.classList.add('d-none');
       resultScreen.classList.remove('d-none');
 
       scoreDisplay.textContent = `Score: ${score} / ${quizData.length}`;
@@ -1062,92 +1045,100 @@ const quizData = [
       renderAnswerReview();
     }
 
-    // Render Answer Review Section
+    // ### CORRECTED AND IMPROVED FUNCTION START ###
     function renderAnswerReview() {
-      answerReviewContainer.innerHTML = '';
-      quizData.forEach((question, index) => {
-        const userAnswer = answers[index];
-        const isCorrect = userAnswer === question.correct;
+        answerReviewContainer.innerHTML = '';
+        quizData.forEach((question, index) => {
+            const userAnswer = answers[index];
+            
+            const reviewItem = document.createElement('div');
+            reviewItem.className = 'review-item';
+            reviewItem.innerHTML = `<p class="question-text">Q${index + 1}: ${question.question.replace(/\n/g, '<br>')}</p><div class="options-review"></div>`;
+            
+            const optionsReviewDiv = reviewItem.querySelector('.options-review');
+            
+            question.option.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option-item';
 
-        const reviewItem = document.createElement('div');
-        reviewItem.className = 'review-item';
-        reviewItem.innerHTML = `
-          <p class="question-text">Q${index + 1}: ${question.question}</p>
-          <div class="options-review"></div>
-        `;
+                let iconClass = 'far fa-circle';
+                let iconColor = 'text-secondary';
+                let feedbackText = '';
 
-        const optionsReviewDiv = reviewItem.querySelector('.options-review');
-        question.option.forEach(option => {
-          const optionElement = document.createElement('div');
-          optionElement.className = 'option-item';
+                const isThisTheCorrectOption = option.trim() === question.correct;
+                const isThisTheUserSelection = option === userAnswer;
 
-          let iconClass = 'fa-circle'; // Default for unselected
-          let iconColor = 'text-secondary'; // Default color
+                // Case 1: User picked the correct answer
+                if (isThisTheCorrectOption && isThisTheUserSelection) {
+                    iconClass = 'far fa-check-circle';
+                    iconColor = 'text-success';
+                    optionElement.classList.add('user-answer', 'correct-answer');
+                    feedbackText = `<span class="ms-2 fw-bold" style="color: var(--correct-color);">(Correct)</span>`;
+                
+                // Case 2: This is the correct answer, but the user picked something else (or didn't answer)
+                } else if (isThisTheCorrectOption && !isThisTheUserSelection) {
+                    iconClass = 'far fa-check-circle';
+                    iconColor = 'text-success';
+                    optionElement.classList.add('correct-answer');
+                    feedbackText = `<span class="ms-2 fw-bold" style="color: var(--correct-color);">(Correct Answer)</span>`;
 
-          if (option === question.correct) {
-            iconClass = 'fa-check-circle';
-            iconColor = 'text-success';
-            optionElement.classList.add('correct-answer');
-          }
+                // Case 3: This is the user's choice, and it's wrong
+                } else if (!isThisTheCorrectOption && isThisTheUserSelection) {
+                    iconClass = 'far fa-times-circle';
+                    iconColor = 'text-danger';
+                    optionElement.classList.add('user-answer', 'wrong');
+                    feedbackText = `<span class="ms-2 fw-bold" style="color: var(--accent-color);">(Your answer is incorrect )</span>`;
+                }
+                
+                // Case 4 (the 'else' part) is the default grey circle for other options
 
-          if (option === userAnswer && option !== question.correct) {
-            iconClass = 'fa-times-circle';
-            iconColor = 'text-danger';
-            optionElement.classList.add('user-answer', 'wrong');
-          } else if (option === userAnswer && option === question.correct) {
-            iconClass = 'fa-check-circle'; // User picked correct answer
-            iconColor = 'text-success';
-            optionElement.classList.add('user-answer', 'correct-answer');
-          }
+                optionElement.innerHTML = `
+                  <span class="option-icon ${iconColor}"><i class="${iconClass}"></i></span>
+                  <span>${option}</span>
+                  ${feedbackText}
+                `;
+                optionsReviewDiv.appendChild(optionElement);
+            });
 
-          optionElement.innerHTML = `
-            <span class="option-icon ${iconColor}"><i class="far ${iconClass}"></i></span>
-            <span>${option}</span>
-          `;
-          optionsReviewDiv.appendChild(optionElement);
+            if (question.explanation) {
+                const explanationDiv = document.createElement('div');
+                explanationDiv.className = 'explanation';
+                explanationDiv.innerHTML = `<strong>Explanation:</strong> ${question.explanation}`;
+                reviewItem.appendChild(explanationDiv);
+            }
+
+            answerReviewContainer.appendChild(reviewItem);
         });
-
-        if (question.explanation) {
-          const explanationDiv = document.createElement('div');
-          explanationDiv.className = 'explanation';
-          explanationDiv.innerHTML = `<strong>Explanation:</strong> ${question.explanation}`;
-          reviewItem.appendChild(explanationDiv);
-        }
-
-        answerReviewContainer.appendChild(reviewItem);
-      });
     }
+    // ### CORRECTED AND IMPROVED FUNCTION END ###
 
-    // Restart Quiz
     function restartQuiz() {
       currentQuestionIndex = 0;
       answers.fill(null);
       markedForReview.fill(false);
-      timeRemaining = 50 * 60; // Reset timer for 50 minutes
+      timeRemaining = 50 * 60;
       quizSubmitted = false;
 
-      // Hide result screen, show password screen
       resultScreen.classList.add('d-none');
       passwordScreen.classList.remove('d-none');
-      mainQuizTitle.classList.add('d-none'); // Hide main title on restart
-      modeToggleContainer.classList.add('d-none'); // Hide mode toggle on restart
-      passwordInput.value = ''; // Clear password field
-      passwordError.textContent = ''; // Clear password error
+      mainQuizTitle.classList.add('d-none');
+      modeToggleContainer.classList.add('d-none');
+      passwordInput.value = '';
+      passwordError.textContent = '';
 
-      updateTimer(); // Reset timer display
-      generateQuestionPalette(); // Re-generate and reset palette
-      updateQuestionCounter(); // Reset question counter
-      updateNavigationButtons(); // Reset button visibility
+      updateTimer();
+      generateQuestionPalette();
+      updateQuestionCounter();
+      updateNavigationButtons();
     }
 
-    // Dark/Light Mode Toggle
     function loadDarkModePreference() {
       if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
-        modeToggleBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        modeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
       } else {
         document.body.classList.remove('dark-mode');
-        modeToggleBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+        modeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
       }
     }
 
@@ -1155,12 +1146,11 @@ const quizData = [
       document.body.classList.toggle('dark-mode');
       if (document.body.classList.contains('dark-mode')) {
         localStorage.setItem('darkMode', 'enabled');
-        modeToggleBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        modeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
       } else {
         localStorage.setItem('darkMode', 'disabled');
-        modeToggleBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+        modeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
       }
-      // Re-apply legend colors on mode change
       updateLegendColors();
     }
 
@@ -1175,7 +1165,6 @@ const quizData = [
             } else if (legendColorDiv.classList.contains('marked')) {
                 colorToApply = rootStyle.getPropertyValue('--warning-color');
             } else if (legendColorDiv.classList.contains('answered-marked')) {
-                // This class is handled directly by CSS blending, so we need to set explicit color for legend
                 colorToApply = colorMix(rootStyle.getPropertyValue('--answered-color'), rootStyle.getPropertyValue('--warning-color'), 0.5);
             } else {
                 colorToApply = rootStyle.getPropertyValue('--unattempted-color');
@@ -1185,7 +1174,6 @@ const quizData = [
         });
     }
 
-    // Simple color mixing for legend (approximate)
     function colorMix(color1, color2, percentage) {
         const hexToRgb = hex => {
             const r = parseInt(hex.slice(1, 3), 16);
@@ -1193,23 +1181,15 @@ const quizData = [
             const b = parseInt(hex.slice(5, 7), 16);
             return { r, g, b };
         };
-
-        const rgbToHex = (r, g, b) => {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        };
-
-        const c1 = hexToRgb(color1);
-        const c2 = hexToRgb(color2);
-
+        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        const c1 = hexToRgb(color1.trim());
+        const c2 = hexToRgb(color2.trim());
         const r = Math.round(c1.r * (1 - percentage) + c2.r * percentage);
         const g = Math.round(c1.g * (1 - percentage) + c2.g * percentage);
         const b = Math.round(c1.b * (1 - percentage) + c2.b * percentage);
-
         return rgbToHex(r, g, b);
     }
 
-
-    // Initial setup
     passwordSubmitBtn.addEventListener('click', () => {
         const enteredPassword = passwordInput.value;
         const enteredEncryptedPassword = obfuscate(enteredPassword);
@@ -1217,19 +1197,18 @@ const quizData = [
         if (enteredEncryptedPassword === actualEncryptedPassword) {
             passwordScreen.classList.add('d-none');
             quizSection.classList.remove('d-none');
-            mainQuizTitle.classList.remove('d-none'); // Show main title
-            modeToggleContainer.classList.remove('d-none'); // Show mode toggle
-            loadDarkModePreference(); // Load dark mode preference after showing quiz
+            mainQuizTitle.classList.remove('d-none');
+            modeToggleContainer.classList.remove('d-none');
+            loadDarkModePreference();
             loadQuestion();
             generateQuestionPalette();
-            timerInterval = setInterval(updateTimer, 1000); // Start timer
-            updateNavigationButtons(); // Initial call for button visibility
+            timerInterval = setInterval(updateTimer, 1000);
+            updateNavigationButtons();
         } else {
             passwordError.textContent = 'Incorrect password. Please try again.';
         }
       });
 
-      // Allow pressing Enter in password field
       passwordInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           passwordSubmitBtn.click();
@@ -1238,7 +1217,11 @@ const quizData = [
 
       prevBtn.addEventListener('click', showPreviousQuestion);
       nextBtn.addEventListener('click', showNextQuestion);
-      submitQuizFinalBtn.addEventListener('click', submitQuiz);
+      submitQuizFinalBtn.addEventListener('click', () => {
+        const myModal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+        myModal.hide();
+        submitQuiz();
+      });
       restartQuizBtn.addEventListener('click', restartQuiz);
 
       markForReviewCheckbox.addEventListener('change', () => {
@@ -1249,19 +1232,22 @@ const quizData = [
       modeToggleBtn.addEventListener('click', toggleMode);
 
       printSaveBtn.addEventListener('click', () => {
-        const element = document.getElementById('resultsSection'); // Target the results section
-        html2pdf().from(element).set({
-          margin: 10,
-          filename: 'English_Quiz_Results.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { avoid: '.review-item' } // Avoid breaking review items across pages
-        }).save();
+        const element = document.getElementById('resultScreen'); 
+        const opt = {
+          margin:       10,
+          filename:     'English_Quiz_Results.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, logging: true, dpi: 192, letterRendering: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak:    { mode: ['avoid-all', 'css'], before: '.review-item' }
+        };
+        html2pdf().from(element).set(opt).save();
       });
 
-      // Set initial legend colors based on loaded mode
-      updateLegendColors();
+      document.addEventListener('DOMContentLoaded', () => {
+        loadDarkModePreference();
+        updateLegendColors();
+      });
   </script>
 </body>
 </html>
